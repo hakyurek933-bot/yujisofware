@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import { api, money, dateTR } from '@/lib/client';
 import { Empty, RoleBadge, Stars } from '@/lib/ui';
 
@@ -30,7 +32,7 @@ const emptyProduct = {
 };
 
 export default function AdminPage() {
-  const { user, setUser, notify, reloadBoot } = useSite();
+  const { user, setUser, notify, reloadBoot, login, logout } = useSite();
   const router = useRouter();
   const [tab, setTab] = useState('dash');
   const [stats, setStats] = useState(null);
@@ -47,21 +49,27 @@ export default function AdminPage() {
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [loginErr, setLoginErr] = useState('');
 
   const isOwner = user && OWNER.includes(user.role);
 
   useEffect(() => {
-    if (!user) {
-      router.push('/giris');
-      return;
-    }
-    if (!STAFF.includes(user.role)) {
-      router.push('/');
-      return;
-    }
-    refresh();
+    if (user && STAFF.includes(user.role)) refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const doLogin = async (e) => {
+    e.preventDefault();
+    setLoginErr('');
+    try {
+      const u = await login(loginUser, loginPass);
+      notify(`Hoş geldin ${u.username}.`);
+    } catch (err) {
+      setLoginErr(err.message);
+    }
+  };
 
   const refresh = async () => {
     try {
@@ -289,7 +297,69 @@ export default function AdminPage() {
     }
   };
 
-  if (!user || !STAFF.includes(user.role)) return null;
+  if (!user) {
+    return (
+      <section className="sec wrap">
+        <div className="card auth-card" style={{ margin: '0 auto' }}>
+          <span className="kicker">🛠️ Yetkili Paneli</span>
+          <h1 style={{ fontSize: 24, marginTop: 8 }}>Yetkili Girişi</h1>
+          <p className="hint" style={{ marginTop: 6 }}>
+            Panele erişmek için yetkili hesabınla giriş yap. Giriş bilgilerini unuttuysan owner&apos;a ulaş.
+          </p>
+          {loginErr && <div className="err">{loginErr}</div>}
+          <form onSubmit={doLogin}>
+            <div className="field">
+              <label>Kullanıcı Adı</label>
+              <input
+                value={loginUser}
+                onChange={(e) => setLoginUser(e.target.value)}
+                placeholder="owner"
+                autoFocus
+                required
+              />
+            </div>
+            <div className="field">
+              <label>Şifre</label>
+              <input
+                type="password"
+                value={loginPass}
+                onChange={(e) => setLoginPass(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <button className="btn btn-gold btn-block">PANELİ AÇ</button>
+          </form>
+          <p className="auth-alt">
+            <Link href="/">← Ana sayfaya dön</Link>
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!STAFF.includes(user.role)) {
+    return (
+      <section className="sec wrap">
+        <div className="card" style={{ maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 40 }}>🔒</div>
+          <h1 className="sec-title" style={{ fontSize: 22 }}>Yetkin yok</h1>
+          <p className="mut" style={{ margin: '10px 0 18px' }}>
+            <b>{user.username}</b> hesabı yetkili değil (rol: <span className={`role-badge role-${user.role}`}>{user.role}</span>).
+            Panel erişimi owner, founder, admin ve moderator rollerine açık.
+          </p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/" className="btn">
+              Ana sayfa
+            </Link>
+            <button className="btn btn-violet" onClick={logout}>
+              Farklı hesapla giriş yap
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const filteredProducts = products.filter((p) =>
     search ? (p.name + p.category + p.type).toLowerCase().includes(search.toLowerCase()) : true
@@ -309,6 +379,7 @@ export default function AdminPage() {
 
   return (
     <section className="sec wrap">
+      <Title>Yetkili Paneli</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">Yetkili Paneli</span>
@@ -486,6 +557,7 @@ export default function AdminPage() {
                     <th>Ürün</th>
                     <th>Kategori</th>
                     <th>Fiyat</th>
+                    <th>⬇</th>
                     <th>Rol</th>
                     <th>Durum</th>
                     <th></th>
@@ -502,6 +574,7 @@ export default function AdminPage() {
                       </td>
                       <td>{p.category.toUpperCase()}</td>
                       <td className="gold">{money(p.price)}</td>
+                      <td>{p.downloads || 0}</td>
                       <td>{p.minRole ? <RoleBadge role={p.minRole} /> : <span className="mut">Herkes</span>}</td>
                       <td>
                         <span className={`badge-dot ${p.active ? 'dot-paid' : 'dot-closed'}`} />

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 
 export default function LoginPage() {
   const { login, notify } = useSite();
@@ -31,6 +32,7 @@ export default function LoginPage() {
   return (
     <div className="auth-wrap">
       <form className="card auth-card" onSubmit={submit}>
+        <Title>Giriş Yap</Title>
         <h1>Giriş Yap</h1>
         <p className="hint">Yujisofware hesabınla giriş yap.</p>
         {err && <div className="err">{err}</div>}

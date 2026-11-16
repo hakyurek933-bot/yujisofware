@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 
 export default function ContactPage() {
   const { boot } = useSite();
@@ -9,6 +10,7 @@ export default function ContactPage() {
 
   return (
     <section className="sec wrap">
+      <Title>İletişim</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">İletişim</span>

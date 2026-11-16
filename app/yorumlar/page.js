@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import { api } from '@/lib/client';
 import { Stars, Empty } from '@/lib/ui';
 
@@ -36,6 +38,7 @@ export default function ReviewsPage() {
 
   return (
     <section className="sec wrap">
+      <Title>Yorumlar</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">Topluluk Duvarı</span>
@@ -110,7 +113,9 @@ export default function ReviewsPage() {
                   <p>{r.text}</p>
                   <div className="rev-who">
                     <span className="avatar">{(r.user || '?')[0].toUpperCase()}</span>
-                    <b>{r.user}</b>
+                    <Link href={`/u/${encodeURIComponent(r.user)}`}>
+                      <b>{r.user}</b>
+                    </Link>
                     <span className="rev-cat">{r.category}</span>
                   </div>
                 </div>

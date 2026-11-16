@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import ProductCard from '@/components/ProductCard';
 
 export default function BoosterPage() {
@@ -14,6 +15,7 @@ export default function BoosterPage() {
   return (
     <>
       <section className="sec wrap">
+        <Title>Booster VIP</Title>
         <div className="booster-band">
           <span className="kicker">VIP Boost Ayrıcalığı</span>
           <h1 className="sec-title" style={{ maxWidth: 700 }}>

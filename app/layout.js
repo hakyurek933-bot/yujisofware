@@ -2,6 +2,7 @@ import './globals.css';
 import SiteProvider from '@/components/SiteProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Floating from '@/components/Floating';
 
 export const metadata = {
   title: 'Yujisofware — Premium Game Tools',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
           <Header />
           <main>{children}</main>
           <Footer />
+          <Floating />
         </SiteProvider>
       </body>
     </html>

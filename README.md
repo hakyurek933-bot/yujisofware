@@ -57,7 +57,7 @@ Vercel'de dosya sistemi salt-okunur; veri katmanı Blob'a gider. Blob store boş
 
 ## Panel (`/admin`)
 
-- **Ürünler**: ekle / düzenle / sil — fiyat `0` = ücretsiz, indirme linki, YouTube, VirusTotal, `minRole` kilidi
+- **Ürünler**: ekle / düzenle / sil — fiyat `0` = ücretsiz, indirme linki, YouTube, VirusTotal, `minRole` kilidi, **indirme sayacı**
 - **Siparişler**: ücretsiz ürünler otomatik teslim edilir; ücretli olanlar **Onayla** ile açılır
 - **Kullanıcılar & Roller**: rol atama, banlama (banlı hesap giriş yapamaz)
 - **Çekiliş**: oluştur, **Kura Çek**, yeniden aç, sil
@@ -65,6 +65,14 @@ Vercel'de dosya sistemi salt-okunur; veri katmanı Blob'a gider. Blob store boş
 - **Biletler**: durum yönetimi
 - **Duyurular**: site üst bandı
 - **Ayarlar**: site adı, slogan, hero, Discord, e-posta + **Bakım**: Kategorileri Güncelle / Fabrika Ayarlarına Dön
+
+Panel giriş zorunlu değil: `/admin` açılınca **sayfa içinde** giriş formu çıkar, yetkin yoksa ne yapılacağını söyler.
+
+## Sayfalar
+
+`/` · `/magaza` · `/urun/[slug]` · `/cekilis` · `/destek` · `/yorumlar` · `/u/[username]` · `/hesap` · `/sepet` · `/booster` · `/iletisim` · `/giris` · `/kayit` · `/admin`
+
+Profil sayfaları kullanıcının rolünü, katılma tarihini ve onaylı yorumlarını gösterir.
 
 ## Veri şeması
 

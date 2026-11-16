@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import { api, money, dateTR } from '@/lib/client';
 import { Empty, RoleBadge } from '@/lib/ui';
 
@@ -18,7 +19,7 @@ const TABS = [
 const ORDER_STATUS = { pending: 'Onay Bekliyor', paid: 'Ödendi / Teslim Edildi', cancelled: 'İptal' };
 
 function AccountInner() {
-  const { user, setUser, notify } = useSite();
+  const { user, setUser, notify, login } = useSite();
   const router = useRouter();
   const params = useSearchParams();
   const [tab, setTab] = useState(params.get('tab') || 'profile');
@@ -30,21 +31,59 @@ function AccountInner() {
   const [next2, setNext2] = useState('');
   const [orders, setOrders] = useState([]);
   const [msg, setMsg] = useState(null);
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [loginErr, setLoginErr] = useState('');
 
   useEffect(() => {
-    if (!user) {
-      router.push('/giris');
-      return;
-    }
+    if (!user) return;
     setUsername(user.username);
     setEmail(user.email);
     setBio(user.bio || '');
     api('orders')
       .then((d) => setOrders(d.orders))
       .catch(() => {});
-  }, [user, router]);
+  }, [user]);
 
-  if (!user) return null;
+  const doLogin = async (e) => {
+    e.preventDefault();
+    setLoginErr('');
+    try {
+      await login(loginUser, loginPass);
+    } catch (err) {
+      setLoginErr(err.message);
+    }
+  };
+
+  if (!user) {
+    return (
+      <section className="sec wrap">
+        <Title>Hesabım</Title>
+        <div className="card auth-card" style={{ margin: '0 auto' }}>
+          <span className="kicker">👤 Hesabım</span>
+          <h1 style={{ fontSize: 24, marginTop: 8 }}>Giriş Yap</h1>
+          <p className="hint" style={{ marginTop: 6 }}>
+            Siparişlerin, biletlerin ve profil ayarların burada. Ücretsiz üye olmak da bir saniye.
+          </p>
+          {loginErr && <div className="err">{loginErr}</div>}
+          <form onSubmit={doLogin}>
+            <div className="field">
+              <label>Kullanıcı Adı</label>
+              <input value={loginUser} onChange={(e) => setLoginUser(e.target.value)} autoFocus required />
+            </div>
+            <div className="field">
+              <label>Şifre</label>
+              <input type="password" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} required />
+            </div>
+            <button className="btn btn-gold btn-block">GİRİŞ YAP</button>
+          </form>
+          <p className="auth-alt">
+            Hesabın yok mu? <Link href="/kayit">Ücretsiz kayıt ol</Link>
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -75,6 +114,7 @@ function AccountInner() {
 
   return (
     <section className="sec wrap">
+      <Title>Hesabım</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">Hesabım</span>

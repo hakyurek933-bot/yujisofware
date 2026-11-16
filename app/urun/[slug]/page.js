@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useSite } from '@/components/SiteProvider';
 import ProductCard from '@/components/ProductCard';
+import Title from '@/components/Title';
 import { CATEGORY_GRAD, Empty } from '@/lib/ui';
-import { money } from '@/lib/client';
+import { money, api } from '@/lib/client';
 
 const RANK = { member: 0, booster: 1, sponsor: 2, moderator: 3, admin: 4, founder: 5, owner: 6 };
 
@@ -20,6 +21,7 @@ export default function ProductPage() {
   if (!p) {
     return (
       <section className="sec wrap">
+        <Title>Ürün bulunamadı</Title>
         <Empty icon="🔍" text="Ürün bulunamadı veya yayından kaldırılmış." />
         <div style={{ textAlign: 'center' }}>
           <Link href="/magaza" className="btn btn-gold">
@@ -35,6 +37,16 @@ export default function ProductPage() {
   const locked = !!p.minRole && rank < (RANK[p.minRole] ?? 99);
   const related = products.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
 
+  const dl = async () => {
+    try {
+      const d = await api('products/download', { method: 'POST', body: { id: p.id } });
+      if (d.url) window.open(d.url, '_blank', 'noopener');
+      else notify('Bu araç için indirme linki henüz eklenmemiş.', 'err');
+    } catch (e) {
+      notify(e.message, 'err');
+    }
+  };
+
   const add = () => {
     if (!user) {
       notify('Sepete eklemek için giriş yapmalısın.', 'err');
@@ -48,6 +60,7 @@ export default function ProductPage() {
 
   return (
     <section className="sec wrap">
+      <Title>{p.name}</Title>
       <div className="mut" style={{ marginBottom: 18, fontSize: 13.5 }}>
         <Link href="/magaza">Mağaza</Link> / <Link href={`/magaza?cat=${p.category}`}>{p.category.toUpperCase()}</Link> / {p.name}
       </div>
@@ -72,6 +85,8 @@ export default function ProductPage() {
               <span className="v">{p.category.toUpperCase()}</span>
               <span className="k">Stok</span>
               <span className="v">{p.stock > 0 ? `${p.stock} adet` : 'Sınırsız'}</span>
+              <span className="k">İndirme</span>
+              <span className="v">⬇ {p.downloads || 0}</span>
               {p.minRole && (
                 <>
                   <span className="k">Erişim</span>
@@ -127,10 +142,10 @@ export default function ProductPage() {
                 🛡️ Tarama raporu eklenmedi
               </span>
             )}
-            {p.download && p.price === 0 && (
-              <a href={p.download} target="_blank" rel="noreferrer" className="btn btn-gold">
-                ⬇ Doğrudan İndir
-              </a>
+            {p.download && (
+              <button className="btn btn-gold" onClick={dl}>
+                ⬇ Ücretsiz İndir
+              </button>
             )}
           </div>
 

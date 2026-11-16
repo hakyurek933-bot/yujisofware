@@ -113,6 +113,25 @@ async function handle(method, parts, query, body) {
       });
     }
 
+    if (p.startsWith('profile/')) {
+      const name = decodeURIComponent(p.slice('profile/'.length)).toLowerCase();
+      const db = await load();
+      const u = db.users.find((x) => x.username.toLowerCase() === name);
+      const reviews = db.reviews
+        .filter((r) => (r.user || '').toLowerCase() === name && r.status === 'approved')
+        .sort((a, b) => b.createdAt - a.createdAt);
+      if (!u && reviews.length === 0) return bad('Kullanıcı bulunamadı.', 404);
+      return ok({
+        profile: {
+          username: u ? u.username : name,
+          role: u ? u.role : 'member',
+          createdAt: u ? u.createdAt : reviews[reviews.length - 1]?.createdAt || 0,
+          bio: u ? u.bio || '' : '',
+          reviews
+        }
+      });
+    }
+
     if (p === 'me') {
       const u = await currentUser();
       return ok({ user: pub(u) });
@@ -292,6 +311,18 @@ async function handle(method, parts, query, body) {
       t.pass = bcrypt.hashSync(next, 10);
     });
     return ok({ ok: true });
+  }
+
+  // download counter (public, feeds the product stats panel)
+  if (p === 'products/download') {
+    const res = await mutate((db) => {
+      const prod = db.products.find((x) => x.id === body.id);
+      if (!prod) return { error: 'Ürün yok.' };
+      prod.downloads = (prod.downloads || 0) + 1;
+      return { url: prod.download || '', downloads: prod.downloads };
+    });
+    if (res.error) return bad(res.error);
+    return ok({ url: res.url, downloads: res.downloads });
   }
 
   // orders
@@ -571,7 +602,7 @@ async function handle(method, parts, query, body) {
       }
       let slug = slugify(data.name);
       if (db.products.some((x) => x.slug === slug)) slug = `${slug}-${uid()}`;
-      const prod = { id: uid('prd_'), slug, createdAt: Date.now(), ...data };
+      const prod = { id: uid('prd_'), slug, downloads: 0, createdAt: Date.now(), ...data };
       db.products.push(prod);
       return { product: prod };
     });

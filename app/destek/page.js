@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import { api, dateTR } from '@/lib/client';
 import { Empty, RoleBadge } from '@/lib/ui';
 
@@ -81,6 +82,7 @@ export default function SupportPage() {
 
   return (
     <section className="sec wrap">
+      <Title>Destek</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">Destek / Ticket</span>

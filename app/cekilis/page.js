@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import { api } from '@/lib/client';
 import { Empty } from '@/lib/ui';
 
@@ -64,6 +65,7 @@ export default function GiveawaysPage() {
 
   return (
     <section className="sec wrap">
+      <Title>Çekilişler</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">🎉 Çekiliş</span>

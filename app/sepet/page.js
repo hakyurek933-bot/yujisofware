@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 import { api, money } from '@/lib/client';
 import { CATEGORY_GRAD, Empty } from '@/lib/ui';
 
@@ -39,6 +40,7 @@ export default function CartPage() {
 
   return (
     <section className="sec wrap">
+      <Title>Sepetim</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">Sepetim</span>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useSite } from '@/components/SiteProvider';
+import Title from '@/components/Title';
 
 export default function RegisterPage() {
   const { register, notify } = useSite();
@@ -48,6 +49,7 @@ export default function RegisterPage() {
   return (
     <div className="auth-wrap">
       <form className="card auth-card" onSubmit={submit}>
+        <Title>Kayıt Ol</Title>
         <h1>Hoş Geldin!</h1>
         <p className="hint">Yujisofware&apos;ye katılmak için hesap oluştur. Ücretsiz &amp; hızlı.</p>
         {err && <div className="err">{err}</div>}

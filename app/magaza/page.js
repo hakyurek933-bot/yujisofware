@@ -4,6 +4,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSite } from '@/components/SiteProvider';
 import ProductCard from '@/components/ProductCard';
+import Title from '@/components/Title';
 import { Empty } from '@/lib/ui';
 
 const RANK = { member: 0, booster: 1, sponsor: 2, moderator: 3, admin: 4, founder: 5, owner: 6 };
@@ -32,6 +33,7 @@ function StoreInner() {
 
   return (
     <section className="sec wrap">
+      <Title>Ücretsiz Araçlar</Title>
       <div className="sec-head">
         <div>
           <span className="kicker">Mağaza</span>

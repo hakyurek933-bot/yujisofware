@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSite } from '@/components/SiteProvider';
 import ProductCard from '@/components/ProductCard';
+import Title from '@/components/Title';
 import { Stars, CATEGORY_GRAD } from '@/lib/ui';
 
 const FEATURES = [
@@ -44,6 +45,7 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="wrap">
+          <Title>Ücretsiz Hile &amp; Araçlar</Title>
           <div className="hero-badges">
             <span className="pill gold">👑 {s.siteName || 'Yujisofware'} Live System</span>
             <span className="pill green">● %100 Ücretsiz</span>
@@ -222,7 +224,9 @@ export default function Home() {
                 <p>{r.text}</p>
                 <div className="rev-who">
                   <span className="avatar">{(r.user || '?')[0].toUpperCase()}</span>
-                  <b>{r.user}</b>
+                  <Link href={`/u/${encodeURIComponent(r.user)}`}>
+                    <b>{r.user}</b>
+                  </Link>
                   <span className="rev-cat">{r.category}</span>
                 </div>
               </div>
