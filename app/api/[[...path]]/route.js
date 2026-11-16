@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { load, mutate } from '@/lib/db';
+import { CATEGORIES, seedState } from '@/lib/seed';
 import {
   currentUser,
   createSession,
@@ -61,17 +62,54 @@ async function handle(method, parts, query, body) {
   if (method === 'GET') {
     if (p === '' || p === 'bootstrap') {
       const db = await load();
+      const me = await currentUser();
+      const now = Date.now();
       return ok({
         settings: db.settings,
         categories: db.categories,
         announcements: db.announcements.filter((a) => a.active).sort((a, b) => b.createdAt - a.createdAt),
         products: activeProducts(db).map(publicProduct),
         reviews: approvedReviews(db),
+        giveaways: (db.giveaways || [])
+          .map((g) => ({
+            id: g.id,
+            title: g.title,
+            prize: g.prize,
+            description: g.description || '',
+            endsAt: g.endsAt,
+            status: g.status === 'active' && g.endsAt <= now ? 'waiting' : g.status,
+            winner: g.winnerId ? db.users.find((u) => u.id === g.winnerId)?.username || '' : '',
+            entryCount: (g.entries || []).length,
+            joined: me ? (g.entries || []).includes(me.id) : false,
+            createdAt: g.createdAt
+          }))
+          .sort((a, b) => b.createdAt - a.createdAt),
         stats: {
           products: activeProducts(db).length,
           members: db.users.length,
           orders: db.orders.filter((o) => o.status === 'paid').length
         }
+      });
+    }
+
+    if (p === 'giveaways') {
+      const db = await load();
+      const me = await currentUser();
+      return ok({
+        giveaways: (db.giveaways || [])
+          .map((g) => ({
+            id: g.id,
+            title: g.title,
+            prize: g.prize,
+            description: g.description || '',
+            endsAt: g.endsAt,
+            status: g.status === 'active' && g.endsAt <= Date.now() ? 'waiting' : g.status,
+            winner: g.winnerId ? db.users.find((u) => u.id === g.winnerId)?.username || '' : '',
+            entryCount: (g.entries || []).length,
+            joined: me ? (g.entries || []).includes(me.id) : false,
+            createdAt: g.createdAt
+          }))
+          .sort((a, b) => b.createdAt - a.createdAt)
       });
     }
 
@@ -409,6 +447,88 @@ async function handle(method, parts, query, body) {
     return ok({ review: res.review });
   }
 
+  // giveaways
+  if (p === 'giveaways/join') {
+    const { user, err } = await requireUser();
+    if (err) return err;
+    const res = await mutate((db) => {
+      const g = (db.giveaways || []).find((x) => x.id === body.id);
+      if (!g) return { error: 'Çekiliş bulunamadı.' };
+      if (g.status !== 'active') return { error: 'Çekiliş kapalı.' };
+      if (g.endsAt <= Date.now()) return { error: 'Süre doldu.' };
+      if (!Array.isArray(g.entries)) g.entries = [];
+      if (g.entries.includes(user.id)) return { error: 'Bu çekilişe zaten katıldın.' };
+      g.entries.push(user.id);
+      return { count: g.entries.length };
+    });
+    if (res.error) return bad(res.error);
+    return ok({ entryCount: res.count });
+  }
+
+  // admin: giveaways
+  if (p === 'admin/giveaways' || p === 'admin/giveaways/delete' || p === 'admin/giveaways/roll') {
+    const { err } = await requireOwner();
+    if (err) return err;
+
+    if (p.endsWith('/delete')) {
+      const res = await mutate((db) => {
+        const i = (db.giveaways || []).findIndex((x) => x.id === body.id);
+        if (i < 0) return { error: 'Çekiliş yok.' };
+        db.giveaways.splice(i, 1);
+        return { ok: true };
+      });
+      if (res.error) return bad(res.error);
+      return ok(res);
+    }
+
+    if (p.endsWith('/roll')) {
+      const res = await mutate((db) => {
+        const g = (db.giveaways || []).find((x) => x.id === body.id);
+        if (!g) return { error: 'Çekiliş yok.' };
+        const pool = Array.isArray(g.entries) ? g.entries : [];
+        g.winnerId = pool.length ? pool[Math.floor(Math.random() * pool.length)] : '';
+        g.status = 'ended';
+        const w = db.users.find((u) => u.id === g.winnerId);
+        return { winner: w ? w.username : '' };
+      });
+      if (res.error) return bad(res.error);
+      return ok({ winner: res.winner });
+    }
+
+    const data = {
+      title: String(body.title || '').trim().slice(0, 160),
+      prize: String(body.prize || '').trim().slice(0, 300),
+      description: String(body.description || '').slice(0, 1000),
+      endsAt: Math.max(Date.now() + 60000, Number(body.endsAt) || Date.now() + 86400000)
+    };
+    if (!data.title || !data.prize) return bad('Başlık ve ödül zorunlu.');
+    const res = await mutate((db) => {
+      if (!Array.isArray(db.giveaways)) db.giveaways = [];
+      if (body.id) {
+        const t = db.giveaways.find((x) => x.id === body.id);
+        if (!t) return { error: 'Çekiliş yok.' };
+        Object.assign(t, data);
+        if (body.reopen) {
+          t.status = 'active';
+          t.winnerId = '';
+        }
+        return { giveaway: t };
+      }
+      const g = {
+        id: uid('giv_'),
+        status: 'active',
+        entries: [],
+        winnerId: '',
+        createdAt: Date.now(),
+        ...data
+      };
+      db.giveaways.push(g);
+      return { giveaway: g };
+    });
+    if (res.error) return bad(res.error);
+    return ok({ giveaway: res.giveaway });
+  }
+
   // admin: products
   if (p === 'admin/products' || p === 'admin/products/delete') {
     const { err } = await requireStaff();
@@ -521,6 +641,31 @@ async function handle(method, parts, query, body) {
     });
     if (res.error) return bad(res.error);
     return ok({ announcement: res.announcement });
+  }
+
+  // admin: maintenance
+  if (p === 'admin/categories/sync') {
+    const { err } = await requireOwner();
+    if (err) return err;
+    const res = await mutate((db) => {
+      db.categories = CATEGORIES;
+      return { categories: db.categories };
+    });
+    return ok(res);
+  }
+
+  if (p === 'admin/reset') {
+    const { err } = await requireOwner();
+    if (err) return err;
+    const res = await mutate((db) => {
+      const fresh = seedState();
+      fresh.secret = db.secret || fresh.secret;
+      Object.keys(db).forEach((k) => delete db[k]);
+      Object.assign(db, fresh);
+      return { ok: true };
+    });
+    if (res.error) return bad(res.error);
+    return ok(res);
   }
 
   // admin: settings

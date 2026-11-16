@@ -6,20 +6,20 @@ import ProductCard from '@/components/ProductCard';
 import { Stars, CATEGORY_GRAD } from '@/lib/ui';
 
 const FEATURES = [
+  { i: '💰', t: '%100 Ücretsiz', d: 'Hiçbir ürün satılmıyor — hepsi ücretsiz dağıtılıyor.' },
   { i: '🛡️', t: '%100 Undetected', d: 'Aktif ban koruma mekanizması ve periyodik güncelleme.' },
-  { i: '⚡', t: 'Anında Teslimat', d: 'Ödeme sonrası lisans ve dosyalar otomatik iletilir.' },
-  { i: '💎', t: 'VIP Booster Club', d: 'Boostlayan üyelere özel indirim, rol ve beta erişimi.' },
+  { i: '⚡', t: 'Anında Teslimat', d: 'Giriş yap, indir — bekleme, sıra, ödeme yok.' },
   { i: '🎧', t: '7/24 Aktif Destek', d: 'Ticket sistemi, ortalama yanıt süresi 15 dakikanın altında.' }
 ];
 
 const FAQ = [
   {
-    q: 'Ürünler ne kadar sürede teslim edilir?',
-    a: 'Dijital ürünler sipariş onayının ardından anında teslim edilir. Ücretsiz ürünlerde indirme bağlantısı hesabına anında açılır; ödemeli siparişler yetkili onayından sonra aktif olur.'
+    q: 'Ürünler gerçekten ücretsiz mi?',
+    a: 'Evet. Yujisofware\'de hiçbir ürün satılmıyor — tüm hileler, hesaplar ve araçlar ücretsiz dağıtılıyor. Üye ol, giriş yap, indir. Ödeme, lisans ücreti ya da kredi kartı istenmez.'
   },
   {
-    q: 'İade politikanız nedir?',
-    a: 'Dijital ürünlerde teslimat sağlandıktan sonra iade mümkün değildir. Sorun yaşarsan destek biletini aç, ekibimiz çözüm üretene kadar talep açık kalır.'
+    q: 'Çekilişe nasıl katılırım?',
+    a: 'Çekilişler sayfasından hesabınla giriş yap ve "Çekilişe Katıl" butonuna bas. Süre bitince kazanan panel tarafından çekilir ve sitede duyurulur. Discord\'da boost basan üyeler için ikinci bir şans hakkı tanımlanabilir.'
   },
   {
     q: 'Araçlar güvenli mi, ban yer miyim?',
@@ -27,11 +27,7 @@ const FAQ = [
   },
   {
     q: 'Teknik destek alabilir miyim?',
-    a: 'Evet. Tüm ürünlerde satın alma sonrası Discord üzerinden 7/24 teknik destek sağlıyoruz. Ortalama yanıt süremiz 15 dakikanın altındadır.'
-  },
-  {
-    q: 'Yapay zeka kategorisinde ne var?',
-    a: 'Oyun botları, oto-farm araçları ve AI destekli analiz programları sunuyoruz. Popüler oyunlar için özel eğitilmiş modeller mevcuttur.'
+    a: 'Evet. Tüm ürünlerde destek Discord üzerinden 7/24 sağlanıyor. Ortalama yanıt süremiz 15 dakikanın altındadır.'
   }
 ];
 
@@ -42,7 +38,7 @@ export default function Home() {
   const categories = boot?.categories || [];
   const reviews = (boot?.reviews || []).slice(0, 6);
   const stats = boot?.stats || {};
-  const featured = products.filter((p) => p.featured).slice(0, 3);
+  const giveaways = (boot?.giveaways || []).filter((g) => g.status === 'active');
 
   return (
     <>
@@ -50,8 +46,8 @@ export default function Home() {
         <div className="wrap">
           <div className="hero-badges">
             <span className="pill gold">👑 {s.siteName || 'Yujisofware'} Live System</span>
-            <span className="pill green">● %100 Undetected</span>
-            <span className="pill violet">⚡ Anında Teslimat</span>
+            <span className="pill green">● %100 Ücretsiz</span>
+            <span className="pill violet">🎁 Ödeme Yok — Sadece İndir</span>
             <span className="pill">🎧 7/24 Destek</span>
           </div>
           <h1>
@@ -60,28 +56,31 @@ export default function Home() {
           <p className="sub">{s.heroSub || s.tagline}</p>
           <div className="hero-cta">
             <Link href="/magaza" className="btn btn-gold">
-              Mağazayı Keşfet →
+              Ücretsiz Ürünleri İndir →
             </Link>
-            <Link href="/booster" className="btn btn-violet">
+            <Link href="/cekilis" className="btn btn-violet">
+              🎉 Çekilişler
+            </Link>
+            <Link href="/booster" className="btn">
               💎 Booster Özel
             </Link>
           </div>
           <div className="hero-stats">
             <div className="hstat">
               <b>{stats.products ?? 0}+</b>
-              <span>Aktif Ürün</span>
+              <span>Ücretsiz Araç</span>
             </div>
             <div className="hstat">
               <b>{stats.members ?? 0}+</b>
-              <span>Kayıtlı Üye</span>
+              <span>Kayıt Olan Üye</span>
             </div>
             <div className="hstat">
               <b>{stats.orders ?? 0}+</b>
-              <span>Tamamlanan Teslimat</span>
+              <span>İndirilen Araç</span>
             </div>
             <div className="hstat">
-              <b>%99.4</b>
-              <span>Müşteri Memnuniyeti</span>
+              <b>{stats.giveaways ?? 0}</b>
+              <span>Açık Çekiliş</span>
             </div>
           </div>
         </div>
@@ -98,6 +97,19 @@ export default function Home() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="card" style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 34 }}>👥</span>
+          <div>
+            <b style={{ fontSize: 22 }}>{stats.members ?? 0} kişi kayı oldu</b>
+            <div className="mut" style={{ fontSize: 13.5 }}>
+              Topluluğa katıl — ücretsiz araçlara anında eriş, çekilişlere gir.
+            </div>
+          </div>
+          <Link href={user ? '/magaza' : '/kayit'} className="btn btn-gold" style={{ marginLeft: 'auto' }}>
+            {user ? 'Araçlara Git' : 'Ücretsiz Kayıt Ol'}
+          </Link>
         </div>
       </section>
 
@@ -124,21 +136,67 @@ export default function Home() {
         </div>
       </section>
 
-      {featured.length > 0 && (
+      {products.length > 0 ? (
         <section className="sec wrap">
           <div className="sec-head">
             <div>
-              <span className="kicker">Öne Çıkanlar</span>
-              <h2 className="sec-title">En Çok Tercih Edilenler</h2>
+              <span className="kicker">Ücretsiz Araçlar</span>
+              <h2 className="sec-title">Hemen İndir, Hemen Oyna</h2>
+              <p className="sec-sub">Hiçbiri satılmıyor — üye ol, indir, kullan.</p>
             </div>
             <Link href="/magaza" className="btn btn-sm">
-              Katalogda Gör →
+              Tüm Araçlar →
             </Link>
           </div>
           <div className="prod-grid">
-            {featured.map((p) => (
+            {[...products].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)).slice(0, 6).map((p) => (
               <ProductCard key={p.id} p={p} />
             ))}
+          </div>
+        </section>
+      ) : (
+        <section className="sec wrap">
+          <div className="booster-band" style={{ background: 'linear-gradient(135deg, rgba(124,92,255,0.14), rgba(55,229,255,0.12))', borderColor: 'rgba(124,92,255,0.4)' }}>
+            <span className="kicker">Katalog</span>
+            <h2 className="sec-title" style={{ maxWidth: 640 }}>
+              Araçlar Yükleniyor — İlk Sürüm Yakında
+            </h2>
+            <p className="sec-sub">
+              Araçlar kategori bazında ekleniyor. Discord&apos;a katıl, yeni araçlardan ilk haberdar ol.
+            </p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
+              <a href={s.discord || '#'} target="_blank" rel="noreferrer" className="btn btn-gold">
+                Discord&apos;a Katıl
+              </a>
+              <Link href="/cekilis" className="btn btn-violet">
+                🎉 Çekilişe Katıl
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {giveaways.length > 0 && (
+        <section className="sec wrap">
+          <div
+            className="booster-band"
+            style={{ background: 'linear-gradient(135deg, rgba(245,196,81,0.14), rgba(255,138,224,0.14))', borderColor: 'rgba(245,196,81,0.4)' }}
+          >
+            <span className="kicker">🎉 Çekiliş</span>
+            <h2 className="sec-title" style={{ maxWidth: 680 }}>
+              {giveaways[0].title}
+            </h2>
+            <p className="sec-sub">
+              Ödül: <b className="gold">{giveaways[0].prize}</b> — katılım tamamen ücretsiz, sonuçlar sitede duyurulur.
+            </p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
+              <Link href="/cekilis" className="btn btn-gold">
+                Çekilişe Katıl →
+              </Link>
+              <Link href="/cekilis" className="btn">
+                Tüm Çekilişler
+              </Link>
+            </div>
           </div>
         </section>
       )}

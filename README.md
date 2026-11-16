@@ -1,15 +1,42 @@
 # yujisofware
 
-ggklani.win tarzı premium game tools mağazası — Next.js 14 (App Router), Vercel'e hazır.
+Ücretsiz hile & araç dağıtım sitesi — Next.js 14 (App Router), Vercel'e hazır. ggklani.win düzeni, paywall yok.
 
-## Özellikler
+## Model
 
-- **Mağaza**: kategori filtresi, arama, ürün detay sayfası, sepet, sipariş
-- **Roller**: `owner`, `founder`, `admin`, `moderator`, `sponsor`, `booster`, `member`
-- **Ban sistemi**: banlanan hesap giriş yapamaz, aktif oturumu düşer
-- **Yetkili paneli** (`/admin`): ürün CRUD, sipariş onaylama, rol/ban yönetimi, yorum moderasyonu, biletler, duyurular, site ayarları
-- **Destek ticket** sistemi, yorum duvarı (moderasyonlu), duyuru bandı, bildirim zili
-- **Auth**: bcrypt şifre + HMAC-SHA256 imzalı HttpOnly cookie oturumu
+- **Her şey ücretsiz**: ürün satılmıyor, fiyat etiketi yok. Üye ol → indir.
+- **Ürünleri sen ekliyorsun**: panelden eklenir, seed boş gelir.
+- **Çekiliş alanı**: `/cekilis` — üyeler katılır, panelden kura çekilir, kazanan duyurulur.
+- **Üye sayacı**: ana sayfada "N kişi kayı oldu" bandı, hero istatistikleri.
+
+## Kategoriler
+
+`VALORANT` · `CS2` · `LOL` · `MİNECRAFT` · `ROBLOX` · `FORTNITE` · `UNDERGROUND` · `BOOSTER ÖZEL`
+
+AI kategorisi kaldırıldı. Yeni kategori eklemek için `lib/seed.js` → `CATEGORIES`, sonra panelden **Kategorileri Güncelle**.
+
+## Roller
+
+`owner` > `founder` > `admin` > `moderator` > `sponsor` > `booster` > `member`
+
+| Rol | Panel | Rol atama | Ban | Çekiliş / Duyuru / Ayar |
+|---|---|---|---|---|
+| owner | ✅ | ✅ | ✅ | ✅ |
+| founder | ✅ | ✅ | ✅ | ✅ |
+| admin | ✅ | ❌ | ✅ | ❌ |
+| moderator | ✅ | ❌ | ❌ | ❌ |
+| sponsor / booster / member | ❌ | ❌ | ❌ | ❌ |
+
+Ürünlere `minRole` (booster/sponsor) verilebilir — o araçlar sadece yeterli role sahip üyelere açılır.
+
+## Hesaplar (seed)
+
+| Rol | Kullanıcı | Şifre |
+|---|---|---|
+| owner | `owner` | `owner123!` |
+| admin | `admin` | `admin123!` |
+
+İlk girişten sonra **Hesabım → Güvenlik** bölümünden şifreleri değiştir.
 
 ## Kurulum
 
@@ -18,43 +45,27 @@ npm install
 npm run dev
 ```
 
-http://localhost:3000 — ilk açılışta `data/db.json` otomatik seed edilir.
-
-### İlk giriş (seed)
-
-| Alan | Değer |
-|---|---|
-| Kullanıcı | `owner` |
-| Şifre | `owner123!` |
-
-Girişten sonra **Hesabım → Güvenlik** bölümünden şifreyi değiştir.
+http://localhost:3000 — ilk açılışta `data/db.json` seed ile oluşur (local dosya driver'ı).
 
 ## Vercel'e deploy
 
-1. Bu repo'yu GitHub'a ititle, Vercel'de **Import** et (framework otomatik algılanır).
-2. Vercel dashboard → **Storage** → **Blob** → yeni store oluştur → `BLOB_READ_WRITE_TOKEN` env'e otomatik yazılır.
-3. Deploy'u tetikle. Veriler artık Blob'da tutulur (dosya sistemi Vercel'de salt okunur olduğu için local dosya driver'ı sadece `npm run dev` içindir).
+1. Repo'yu GitHub'a it, Vercel'de **Import** et (Next.js preset otomatik).
+2. **Storage → Create Store → Blob** oluştur → `BLOB_READ_WRITE_TOKEN` env'e otomatik yazılır.
+3. **Deployments → son deploy → Redeploy**.
 
-Env değişkenleri:
+Vercel'de dosya sistemi salt-okunur; veri katmanı Blob'a gider. Blob store boşsa site seed ile açılır.
 
-| Değişken | Zorunlu | Açıklama |
-|---|---|---|
-| `BLOB_READ_WRITE_TOKEN` | Vercel'de evet | Veri katmanı (Vercel Blob storage) |
-| `SESSION_SECRET` | hayır | Boşsa oturum anahtarı ilk kayıtta üretilip depolanır |
+## Panel (`/admin`)
 
-## Roller & yetkiler
+- **Ürünler**: ekle / düzenle / sil — fiyat `0` = ücretsiz, indirme linki, YouTube, VirusTotal, `minRole` kilidi
+- **Siparişler**: ücretsiz ürünler otomatik teslim edilir; ücretli olanlar **Onayla** ile açılır
+- **Kullanıcılar & Roller**: rol atama, banlama (banlı hesap giriş yapamaz)
+- **Çekiliş**: oluştur, **Kura Çek**, yeniden aç, sil
+- **Yorumlar**: onayla / reddet
+- **Biletler**: durum yönetimi
+- **Duyurular**: site üst bandı
+- **Ayarlar**: site adı, slogan, hero, Discord, e-posta + **Bakım**: Kategorileri Güncelle / Fabrika Ayarlarına Dön
 
-| Rol | Panel | Rol atama | Ban | Duyuru / Ayar |
-|---|---|---|---|---|
-| owner | ✅ | ✅ (herkes) | ✅ | ✅ |
-| founder | ✅ | ✅ (owner hariç) | ✅ | ✅ |
-| admin | ✅ | ❌ | ✅ | ❌ |
-| moderator | ✅ | ❌ | ❌ | ❌ |
-| sponsor / booster / member | ❌ | ❌ | ❌ | ❌ |
+## Veri şeması
 
-Ürünlere `minRole` (booster/sponsor) verilebilir — o ürünler yalnızca yeterli role sahip üyelere satılır.
-
-## Notlar
-
-- Tüm veri tek JSON şemasında (`lib/seed.js` yapısı): `users`, `products`, `orders`, `tickets`, `reviews`, `announcements`, `settings`.
-- Ödemeli siparişler `pending` başlar; panelde **Onayla** deyince üye indirme bağlantısını görür. Ücretsiz ürünler anında teslim edilir.
+`users` · `products` · `orders` · `tickets` · `reviews` · `announcements` · `giveaways` · `categories` · `settings` — hepsi `lib/seed.js` yapısında, tek JSON blob olarak Blob'da durur.

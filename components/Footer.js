@@ -26,9 +26,9 @@ export default function Footer() {
           <div>
             <h4>Mağaza</h4>
             <Link href="/magaza">Tüm Ürünler</Link>
+            <Link href="/cekilis">Çekilişler</Link>
             <Link href="/magaza?cat=valorant">Valorant</Link>
             <Link href="/magaza?cat=cs2">Counter Strike 2</Link>
-            <Link href="/magaza?cat=ai">Yapay Zeka</Link>
             <Link href="/booster">Booster Özel</Link>
           </div>
           <div>

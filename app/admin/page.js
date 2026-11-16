@@ -41,6 +41,7 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [anns, setAnns] = useState([]);
+  const [giveaways, setGiveaways] = useState([]);
   const [settings, setSettings] = useState(null);
   const [form, setForm] = useState(emptyProduct);
   const [editing, setEditing] = useState(null);
@@ -64,14 +65,15 @@ export default function AdminPage() {
 
   const refresh = async () => {
     try {
-      const [st, pr, us, or, rv, tk, bo] = await Promise.all([
+      const [st, pr, us, or, rv, tk, bo, gw] = await Promise.all([
         api('admin/stats'),
         api('products'),
         api('admin/users'),
         api('orders?all=1'),
         api('reviews?all=1'),
         api('tickets?all=1'),
-        api('bootstrap')
+        api('bootstrap'),
+        api('giveaways')
       ]);
       setStats(st.stats);
       setProducts(pr.products);
@@ -82,6 +84,7 @@ export default function AdminPage() {
       setTickets(tk.tickets);
       setAnns(bo.announcements);
       setSettings(bo.settings);
+      setGiveaways(gw.giveaways);
     } catch (e) {
       notify(e.message, 'err');
     }
@@ -185,6 +188,83 @@ export default function AdminPage() {
     }
   };
 
+  const saveGiveaway = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const ends = fd.get('endsAt');
+    const endsAt = ends ? new Date(ends).getTime() : Date.now() + 86400000;
+    try {
+      await api('admin/giveaways', {
+        method: 'POST',
+        body: {
+          title: fd.get('title'),
+          prize: fd.get('prize'),
+          description: fd.get('description'),
+          endsAt
+        }
+      });
+      notify('Çekiliş oluşturuldu.');
+      e.target.reset();
+      refresh();
+    } catch (err) {
+      notify(err.message, 'err');
+    }
+  };
+
+  const rollGiveaway = async (id) => {
+    try {
+      const d = await api('admin/giveaways/roll', { method: 'POST', body: { id } });
+      notify(d.winner ? `Kazanan: ${d.winner} 🎉` : 'Katılım yok, kura boş döndü.');
+      refresh();
+    } catch (e) {
+      notify(e.message, 'err');
+    }
+  };
+
+  const reopenGiveaway = async (id) => {
+    try {
+      await api('admin/giveaways', { method: 'POST', body: { id, reopen: true } });
+      notify('Çekiliş yeniden açıldı.');
+      refresh();
+    } catch (e) {
+      notify(e.message, 'err');
+    }
+  };
+
+  const delGiveaway = async (id) => {
+    if (!confirm('Çekiliş silinsin mi?')) return;
+    try {
+      await api('admin/giveaways/delete', { method: 'POST', body: { id } });
+      notify('Çekiliş silindi.');
+      refresh();
+    } catch (e) {
+      notify(e.message, 'err');
+    }
+  };
+
+  const syncCategories = async () => {
+    try {
+      await api('admin/categories/sync', { method: 'POST', body: {} });
+      notify('Kategoriler güncellendi.');
+      refresh();
+      reloadBoot();
+    } catch (e) {
+      notify(e.message, 'err');
+    }
+  };
+
+  const resetData = async () => {
+    if (!confirm('TÜM VERİLER silinip fabrika ayarlarına dönecek. Emin misin?')) return;
+    try {
+      await api('admin/reset', { method: 'POST', body: {} });
+      notify('Fabrika ayarları yüklendi.');
+      setUser(null);
+      router.push('/giris');
+    } catch (e) {
+      notify(e.message, 'err');
+    }
+  };
+
   const delAnn = async (id) => {
     try {
       await api('admin/announcements/delete', { method: 'POST', body: { id } });
@@ -222,6 +302,7 @@ export default function AdminPage() {
     ['users', '👥 Kullanıcılar & Roller'],
     ['reviews', '⭐ Yorumlar'],
     ['tickets', '🎫 Biletler'],
+    ['giveaways', '🎉 Çekiliş'],
     ['anns', '📢 Duyurular'],
     ...(isOwner ? [['settings', '⚙️ Ayarlar']] : [])
   ];
@@ -652,6 +733,75 @@ export default function AdminPage() {
         </div>
       )}
 
+      {tab === 'giveaways' && (
+        <div className="split">
+          <form className="card" onSubmit={saveGiveaway}>
+            <h3 style={{ marginBottom: 14 }}>Yeni Çekiliş</h3>
+            <div className="field">
+              <label>Başlık</label>
+              <input name="title" required placeholder="Örn: Haftalık Araç Çekilişi" />
+            </div>
+            <div className="field">
+              <label>Ödül</label>
+              <input name="prize" required placeholder="Örn: 1 aylık tüm araçlara erişim" />
+            </div>
+            <div className="field">
+              <label>Açıklama</label>
+              <textarea name="description" placeholder="Katılım koşulları, teslimat şekli..." />
+            </div>
+            <div className="field">
+              <label>Bitiş Zamanı</label>
+              <input
+                type="datetime-local"
+                name="endsAt"
+                defaultValue={new Date(Date.now() + 86400000).toISOString().slice(0, 16)}
+              />
+            </div>
+            <button className="btn btn-gold btn-block">Çekilişi Oluştur</button>
+          </form>
+
+          <div>
+            {giveaways.length === 0 ? (
+              <Empty icon="🎁" text="Çekiliş yok." />
+            ) : (
+              giveaways.map((g) => (
+                <div className="card" key={g.id} style={{ marginBottom: 10, padding: 16 }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <b>{g.title}</b>
+                    <span className={`pill ${g.status === 'active' ? 'green' : ''}`}>{g.status}</span>
+                    <span className="pill">👥 {g.entryCount}</span>
+                    <span className="mut" style={{ marginLeft: 'auto', fontSize: 12.5 }}>
+                      {new Date(g.endsAt).toLocaleString('tr-TR')}
+                    </span>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 14 }}>
+                    Ödül: <b className="gold">{g.prize}</b>
+                    {g.winner ? (
+                      <span style={{ marginLeft: 10 }}>
+                        Kazanan: <b style={{ color: 'var(--gold)' }}>🏆 {g.winner}</b>
+                      </span>
+                    ) : null}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                    <button className="btn btn-sm btn-gold" onClick={() => rollGiveaway(g.id)}>
+                      🎲 Kura Çek
+                    </button>
+                    {g.status !== 'active' && (
+                      <button className="btn btn-sm" onClick={() => reopenGiveaway(g.id)}>
+                        Yeniden Aç
+                      </button>
+                    )}
+                    <button className="btn btn-sm btn-danger" onClick={() => delGiveaway(g.id)}>
+                      Sil
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
       {tab === 'anns' && (
         <div className="split">
           <form className="card" onSubmit={saveAnn}>
@@ -730,6 +880,24 @@ export default function AdminPage() {
           </div>
           <button className="btn btn-gold">Ayarları Kaydet</button>
         </form>
+      )}
+
+      {tab === 'settings' && isOwner && (
+        <div className="card" style={{ maxWidth: 640, marginTop: 18 }}>
+          <h3 style={{ marginBottom: 6 }}>Bakım</h3>
+          <p className="form-note" style={{ marginBottom: 16 }}>
+            Kategorileri güncellemek AI kategorisini kaldırır ve Minecraft / Roblox / Fortnite ekler. Fabrika ayarları
+            tüm verileri siler ve başlangıç haline döndürür.
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="btn" onClick={syncCategories}>
+              ↻ Kategorileri Güncelle
+            </button>
+            <button className="btn btn-danger" onClick={resetData}>
+              ♻ Fabrika Ayarlarına Dön
+            </button>
+          </div>
+        </div>
       )}
     </section>
   );

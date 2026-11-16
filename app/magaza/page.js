@@ -35,8 +35,8 @@ function StoreInner() {
       <div className="sec-head">
         <div>
           <span className="kicker">Mağaza</span>
-          <h1 className="sec-title">Tüm Ürünler</h1>
-          <p className="sec-sub">Kategoriye göre filtrele, ara, sepete at — teslimat anında.</p>
+          <h1 className="sec-title">Ücretsiz Araçlar</h1>
+          <p className="sec-sub">Hiçbiri satılmıyor — kategoriye göre filtrele, indir, oyna.</p>
         </div>
         <input
           className="search"

@@ -8,6 +8,7 @@ import { useSite } from './SiteProvider';
 const NAV = [
   { href: '/', label: 'Ana Sayfa' },
   { href: '/magaza', label: 'Mağaza' },
+  { href: '/cekilis', label: 'Çekiliş' },
   { href: '/booster', label: 'Booster VIP' },
   { href: '/destek', label: 'Destek' },
   { href: '/yorumlar', label: 'Yorumlar' },
